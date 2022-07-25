@@ -158,19 +158,19 @@ public class DefaultFilmService implements FilmService {
         }
     }
 
-    List<Film> searchFilmByTitle(String query) {
+    private List<Film> searchFilmByTitle(String query) {
         return getAllFilms().stream()
                 .filter(f -> f.getName().toLowerCase().contains(query.toLowerCase()))
                 .collect(Collectors.toList());
     }
 
-    List<Film> searchFilmByDirector(String query) {
+    private List<Film> searchFilmByDirector(String query) {
         return getAllFilms().stream()
                 .filter(f -> searchInDirectorList(f.getDirectors(), query))
                 .collect(Collectors.toList());
     }
 
-    boolean searchInDirectorList(List<Director> list, String query) {
+    private boolean searchInDirectorList(List<Director> list, String query) {
         return list.stream()
                 .anyMatch(d -> d.getName().toLowerCase().contains(query.toLowerCase()));
     }
