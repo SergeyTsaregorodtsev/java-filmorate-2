@@ -18,6 +18,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Primary
 @Repository
@@ -52,9 +53,7 @@ public class DbFilmStorage implements FilmStorage {
             "WHERE film_directors.director_id = ?";
     private static final String DELETE_FROM_FILM_DIRECTORS_BY_FILM_ID = "DELETE FROM film_directors WHERE FILM_ID = ?";
     private static final String MERGE_FILM_DIRECTORS = "MERGE INTO film_directors (film_id, director_id) VALUES (?,?)";
-    private static final String SELECT_FILMS_FRIENDS = "SELECT * FROM FILMS WHERE FILM_ID IN " +
-            "(SELECT  film_id" +
-            " FROM likes" +
+    private static final String SELECT_FILMS_FRIENDS = "SELECT  film_id  FROM likes" +
             " WHERE film_id NOT IN " +
             "(SELECT film_id FROM likes WHERE user_id = ?)" +
             " AND user_id IN " +
@@ -64,7 +63,7 @@ public class DbFilmStorage implements FilmStorage {
             " WHERE film_id IN " +
             "(SELECT film_id FROM likes WHERE user_id = ?)" +
             " GROUP BY u" +
-            " ORDER BY COUNT (film_id) DESC))";
+            " ORDER BY COUNT (film_id) DESC)";
 
     @Autowired
     public DbFilmStorage(JdbcTemplate jdbcTemplate,
@@ -76,19 +75,11 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     public List<Film> getRecommendationsFilms(Long id) {
-        List<Film> films = jdbcTemplate.query(SELECT_FILMS_FRIENDS, this::mapRowToFilm, id, id);
-        for (Film film : films) {
-            List<Like> likes = jdbcTemplate.query(SELECT_ALL_LIKES_CORRESPONDING_FILM,
-                    this::mapLikeRowToFilm,
-                    film.getId());
-            film.setLikeList(likes);
-            List<Genre> genres = jdbcTemplate.query(SELECT_ALL_GENRES_CORRESPONDING_FILM,
-                    this::mapGenreRowToFilm,
-                    film.getId());
-            film.setGenreList(genres);
-            film.setDirectorList(applyDirectors(film.getId()));
-        }
-        return films;
+        List<Long> listFilmId = jdbcTemplate.query(SELECT_FILMS_FRIENDS,
+                (ResultSet rs, int rowNum) -> rs.getLong("film_id"), id, id);
+        return listFilmId.stream()
+                .map(this::getById)
+                .collect(Collectors.toList());
     }
 
     @Override

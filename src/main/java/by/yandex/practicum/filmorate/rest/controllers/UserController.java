@@ -76,8 +76,8 @@ public class UserController {
     @GetMapping("/users/{id}/friends")
     public List<UserDto> getAllFriends(@PathVariable long id) {
         return friendshipService.getFriendList(id).stream()
-                        .map(toUserDtoConverter::convert)
-                        .collect(Collectors.toList());
+                .map(toUserDtoConverter::convert)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/users/{id}/friends/common/{otherId}")
